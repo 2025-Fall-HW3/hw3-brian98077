@@ -70,8 +70,8 @@ class MyPortfolio:
         """
         TODO: Complete Task 4 Below
         """
-        
-        
+        assets = ["XLK"]
+        self.portfolio_weights[assets] = 1  
         """
         TODO: Complete Task 4 Above
         """

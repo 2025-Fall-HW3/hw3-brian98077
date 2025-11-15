@@ -62,7 +62,8 @@ class EqualWeightPortfolio:
         """
         TODO: Complete Task 1 Below
         """
-
+        self.portfolio_weights[assets] = 1 / len(assets)
+        self.portfolio_weights[self.exclude] = 0
         """
         TODO: Complete Task 1 Above
         """
@@ -113,9 +114,23 @@ class RiskParityPortfolio:
         """
         TODO: Complete Task 2 Below
         """
-
-
-
+        # 1. 計算滾動波動度 (Sigma_i)
+        #    使用 lookback=50，並將 ddof 參數設為 0 (總體標準差)
+        volatility = df_returns[assets].rolling(window=self.lookback).std()
+        
+        # 2. 計算反向波動度 (1 / Sigma_i)
+        inverse_volatility = 1 / volatility
+        
+        # 3. 計算每日的反向波動度總和 (Sum of 1 / Sigma_j)
+        sum_inverse_volatility = inverse_volatility.sum(axis=1)
+        
+        # 4. 計算投資資產的最終權重
+        self.portfolio_weights[assets] = inverse_volatility.div(
+            sum_inverse_volatility, axis=0
+        )
+        
+        # 5. 將被排除的資產 (SPY) 權重設為 0
+        self.portfolio_weights[self.exclude] = 0
         """
         TODO: Complete Task 2 Above
         """
@@ -190,8 +205,10 @@ class MeanVariancePortfolio:
 
                 # Sample Code: Initialize Decision w and the Objective
                 # NOTE: You can modify the following code
-                w = model.addMVar(n, name="w", ub=1)
-                model.setObjective(w.sum(), gp.GRB.MAXIMIZE)
+                w = model.addMVar(n, name="w", lb=0, ub=1)
+                objective = mu @ w - 0.5 * gamma * w @ Sigma @ w
+                model.setObjective(objective, gp.GRB.MAXIMIZE)
+                model.addConstr(w.sum() == 1)
 
                 """
                 TODO: Complete Task 3 Above
